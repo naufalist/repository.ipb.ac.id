@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"html/template"
 	"log"
 	"net/http"
 	"strings"
@@ -21,9 +22,7 @@ type Repository struct {
 	Files   map[string]string `json:"files"`
 }
 
-func handleApiRepository(w http.ResponseWriter, req *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
+func getRepositoryDetails(w http.ResponseWriter, req *http.Request) interface{} {
 	if req.Method == "POST" {
 		link := req.FormValue("link")
 
@@ -65,25 +64,55 @@ func handleApiRepository(w http.ResponseWriter, req *http.Request) {
 			}
 		})
 
-		repository := Repository{
+		return Repository{
 			Title:   title,
 			Date:    date,
 			Authors: authors,
 			Files:   files,
 		}
 
-		result, err := json.Marshal(repository)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		w.Write(result)
-		return
-
 	}
 
 	http.Error(w, req.Method+" isn't allowed.", http.StatusBadRequest)
+	return nil
+
+}
+
+func handleApiRepository(w http.ResponseWriter, req *http.Request) {
+
+	repositoryDetails := getRepositoryDetails(w, req)
+
+	w.Header().Set("Content-Type", "application/json")
+
+	result, err := json.Marshal(repositoryDetails)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(result)
+	return
+}
+
+func handleRoot(w http.ResponseWriter, req *http.Request) {
+
+	switch req.Method {
+	case "GET":
+		tmpl := template.Must(template.ParseFiles("index.html"))
+		if err := tmpl.Execute(w, nil); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	case "POST":
+		result := map[string]interface{}{
+			"repository": getRepositoryDetails(w, req),
+			"status":     true,
+		}
+		tmpl := template.Must(template.ParseFiles("index.html"))
+		if err := tmpl.Execute(w, result); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	}
+
 }
 
 func startGoServer() {
@@ -100,5 +129,6 @@ func startGoServer() {
 
 func main() {
 	http.HandleFunc("/api/repository", handleApiRepository)
+	http.HandleFunc("/", handleRoot)
 	startGoServer()
 }
