@@ -71,9 +71,12 @@
                         <td class="ps-0">{{ $fileName }}</td>
                         <td>
                           <div class="d-grid gap-2">
-                            <a target="_blank" href="{{ $fileURL }}" class="btn btn-outline-success btn-sm">
-                              <i class="fa fa-download fa-sm"></i> Download
-                            </a>
+                            <form action="/get-repository-file" method="POST" target="_blank">
+                              <input type="hidden" name="repository_file" value="{{ $fileURL }}">
+                              <button type="submit" class="btn btn-outline-success btn-sm">
+                                <i class="fa fa-download fa-sm"></i> Download
+                              </button>
+                            </form>
                           </div>
                         </td>
                       </tr>
