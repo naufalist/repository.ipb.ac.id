@@ -3,23 +3,85 @@ package main
 import (
 	"encoding/json"
 	"html/template"
+	"io"
 	"log"
 	"net/http"
+	"net/http/cookiejar"
+	"net/url"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
 
 const (
-	baseURL = "https://repository.ipb.ac.id"
-	port    = "9000"
+	baseURL       = "https://repository.ipb.ac.id"
+	port          = "9000"
+	ldap_username = "CHANGE_WITH_YOUR_LDAP_USERNAME"
+	ldap_password = "CHANGE_WITH_YOUR_LDAP_PASSWORD"
 )
+
+type RepositoryApp struct {
+	Client *http.Client
+}
 
 type Repository struct {
 	Title   string            `json:"title"`
 	Date    string            `json:"date"`
 	Authors []string          `json:"authors"`
 	Files   map[string]string `json:"files"`
+}
+
+func (app *RepositoryApp) login() {
+	client := app.Client
+
+	loginURL := baseURL + "/ldap-login"
+
+	data := url.Values{
+		"username":      {ldap_username},
+		"ldap_password": {ldap_password},
+	}
+
+	response, err := client.PostForm(loginURL, data)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	defer response.Body.Close()
+
+	document, err := goquery.NewDocumentFromReader(response.Body)
+	if err != nil {
+		log.Fatalln("Error loading HTTP response body. ", err)
+	}
+
+	switch document.Find(".alert.alert-danger").First().Text() {
+	case "The user name and/or password supplied were not valid.":
+		log.Fatalln("Auth failed: invalid username/pasword")
+	default:
+		log.Println("Auth success.")
+	}
+
+}
+
+func (app *RepositoryApp) getRepositoryFile(w http.ResponseWriter, r *http.Request, fileURL string) {
+	client := app.Client
+
+	res, err := client.Get(fileURL)
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
+	defer res.Body.Close()
+
+	w.Header().Set("Content-Type", res.Header.Get("Content-Type"))
+	w.Header().Set("Content-Length", res.Header.Get("Content-Length"))
+
+	_, err = io.Copy(w, res.Body)
+	if err != nil {
+		http.Error(w, "Remote server error", 503)
+		return
+	}
+
+	return
+
 }
 
 func getRepositoryDetails(w http.ResponseWriter, req *http.Request) interface{} {
@@ -115,6 +177,35 @@ func handleRoot(w http.ResponseWriter, req *http.Request) {
 
 }
 
+func handleGetRepositoryFile(w http.ResponseWriter, req *http.Request) {
+
+	if req.Method == "POST" {
+		link := req.FormValue("repository_file")
+
+		res, err := http.Get(link)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+		defer res.Body.Close()
+
+		if res.StatusCode != 200 {
+			log.Printf("status code error: '%d' '%s'\n", res.StatusCode, res.Status)
+		}
+
+		jar, _ := cookiejar.New(nil)
+
+		repository := RepositoryApp{
+			Client: &http.Client{Jar: jar},
+		}
+
+		repository.login()
+		repository.getRepositoryFile(w, req, link)
+	}
+
+	http.Error(w, req.Method+" isn't allowed.", http.StatusBadRequest)
+
+}
+
 func startGoServer() {
 	log.Printf("web server started at :%s\n", port)
 
@@ -130,5 +221,6 @@ func startGoServer() {
 func main() {
 	http.HandleFunc("/api/repository", handleApiRepository)
 	http.HandleFunc("/", handleRoot)
+	http.HandleFunc("/get-repository-file", handleGetRepositoryFile)
 	startGoServer()
 }
