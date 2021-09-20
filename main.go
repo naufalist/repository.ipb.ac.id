@@ -71,6 +71,11 @@ func (app *RepositoryApp) getRepositoryFile(w http.ResponseWriter, r *http.Reque
 	}
 	defer res.Body.Close()
 
+	splitBySlash := strings.Split(fileURL, "/")
+	splitBySlashResult := splitBySlash[len(splitBySlash)-1]
+	splitByQuestionMark := strings.Split(splitBySlashResult, "?")[0]
+
+	w.Header().Set("Content-Disposition", "attachment; filename="+splitByQuestionMark)
 	w.Header().Set("Content-Type", res.Header.Get("Content-Type"))
 	w.Header().Set("Content-Length", res.Header.Get("Content-Length"))
 
