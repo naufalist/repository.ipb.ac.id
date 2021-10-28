@@ -8,17 +8,31 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/joho/godotenv"
 )
 
-const (
-	baseURL       = "https://repository.ipb.ac.id"
-	port          = "9000"
-	ldap_username = "CHANGE_WITH_YOUR_LDAP_USERNAME"
-	ldap_password = "CHANGE_WITH_YOUR_LDAP_PASSWORD"
+var (
+	REPO_URL      string
+	PORT          string
+	LDAP_USERNAME string
+	LDAP_PASSWORD string
 )
+
+func init() {
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatalf("Failed to load .env file. Reason: %s", err)
+	}
+
+	REPO_URL = os.Getenv("REPO_URL")
+	PORT = os.Getenv("PORT")
+	LDAP_USERNAME = os.Getenv("LDAP_USERNAME")
+	LDAP_PASSWORD = os.Getenv("LDAP_PASSWORD")
+}
 
 type RepositoryApp struct {
 	Client *http.Client
@@ -34,11 +48,11 @@ type Repository struct {
 func (app *RepositoryApp) login() {
 	client := app.Client
 
-	loginURL := baseURL + "/ldap-login"
+	loginURL := REPO_URL + "/ldap-login"
 
 	data := url.Values{
-		"username":      {ldap_username},
-		"ldap_password": {ldap_password},
+		"username":      {LDAP_USERNAME},
+		"ldap_password": {LDAP_PASSWORD},
 	}
 
 	response, err := client.PostForm(loginURL, data)
@@ -126,7 +140,7 @@ func getRepositoryDetails(w http.ResponseWriter, req *http.Request) interface{} 
 				if href, exist := s.Children().Attr("href"); exist {
 					link := s.Text()
 					link = strings.Trim(link, "\n ")
-					files[link] = baseURL + href
+					files[link] = REPO_URL + href
 				}
 			}
 		})
@@ -212,10 +226,10 @@ func handleGetRepositoryFile(w http.ResponseWriter, req *http.Request) {
 }
 
 func startGoServer() {
-	log.Printf("web server started at :%s\n", port)
+	log.Printf("web server started at :%s\n", PORT)
 
 	server := new(http.Server)
-	server.Addr = ":" + port
+	server.Addr = ":" + PORT
 
 	err := server.ListenAndServe()
 	if err != nil {
@@ -224,6 +238,11 @@ func startGoServer() {
 }
 
 func main() {
+
+	http.Handle("/images/",
+		http.StripPrefix("/images/",
+			http.FileServer(http.Dir("images"))))
+
 	http.HandleFunc("/api/repository", handleApiRepository)
 	http.HandleFunc("/", handleRoot)
 	http.HandleFunc("/get-repository-file", handleGetRepositoryFile)
