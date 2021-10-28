@@ -1,118 +1,164 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<head>
-  <!-- Required meta tags -->
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We"
+      crossorigin="anonymous"
+    />
 
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+    <!-- Font Awesome -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+      integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
 
-  <!-- Font Awesome -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <title>IPB Repository Scrapper</title>
+  </head>
 
-  <title>IPB Repository Scrapper</title>
-</head>
-
-<body class="d-flex flex-column h-100">
-
-  <div class="container">
-    <div class="row justify-content-center mt-5">
-      <div class="col-8">
-        <form action="/" method="POST">
-          <div class="mb-3">
-            <label for="repository_url" class="form-label">
-              Repository URL <span class="text-danger">*</span>
-            </label>
-            <input type="text" class="form-control" id="repository_url" name="link" required autocomplete="off" autofocus value="https://repository.ipb.ac.id/handle/123456789/39884">
-            <div id="repository_url_help" class="form-text">
-              Example: <a href="#">https://repository.ipb.ac.id/handle/123456789/39884</a>
-            </div>
-          </div>
-          <div class="d-grid gap-2">
-            <button type="submit" class="btn btn-primary btn-sm"><i class="fa fa-paper-plane fa-sm"></i> Generate</button>
-          </div>
-        </form>
-      </div>
-    </div>
-    <div class="row justify-content-center my-5">
-      <div class="col-8">
-        {{ if .status }}
-        <div class="alert alert-success text-center" role="alert">
-          Yay! Repository has been generated successfully.
-        </div>
-        <div class="table-responsive">
-          <table class="table table-sm">
-            <tr>
-              <th>Title</th>
-              <td>{{ .repository.Title }}</td>
-            </tr>
-            <tr>
-              <th>Date</th>
-              <td>2019</td>
-            </tr>
-            <tr>
-              <th>Author(s)</th>
-              <td>
-                {{ range $_, $v := .repository.Authors }}
-                <div>{{ $v }}</div>
-                {{ end }}
-              </td>
-            </tr>
-            <tr>
-              <th>File(s)</th>
-              <td colspan="2">
-                <div class="table-responsive">
-                  <table class="table table-sm">
-                    <tbody>
-                      {{ range $fileName, $fileURL := .repository.Files  }}
-                      <tr>
-                        <td class="ps-0">{{ $fileName }}</td>
-                        <td>
-                          <div class="d-grid gap-2">
-                            <form action="/get-repository-file" method="POST" target="_blank">
-                              <input type="hidden" name="repository_file" value="{{ $fileURL }}">
-                              <button type="submit" class="btn btn-outline-success btn-sm">
-                                <i class="fa fa-download fa-sm"></i> Download
-                              </button>
-                            </form>
-                          </div>
-                        </td>
-                      </tr>
-                      {{ end }}
-                    </tbody>
-                  </table>
-                </div>
-              </td>
-            </tr>
-          </table>
-        </div>
-        {{ else }}
-        <div class="alert alert-primary text-center" role="alert">
-          The result will be generated after the form submitted.
-        </div>
-        {{ end }}
-      </div>
-    </div>
-  </div>
-
-  <footer class="mt-auto py-5 text-center">
+  <body class="d-flex flex-column h-100">
     <div class="container">
-      <span class="text-muted">Made with 💔 by naufalist</span>
+      <div class="row justify-content-center mt-5">
+        <div class="col-8">
+          <img
+            src="images/Logo-IPB-University-Vertical.png"
+            class="img-fluid d-block mx-auto mb-3"
+            alt="logo"
+            width="200"
+          />
+          <form action="/" method="POST">
+            <div class="mb-3">
+              <label for="repository_url" class="form-label">
+                Repository URL <span class="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                class="form-control"
+                id="repository_url"
+                name="link"
+                placeholder="https://repository.ipb.ac.id/handle/123456789/39884"
+                value="https://repository.ipb.ac.id/handle/123456789/39884"
+                autocomplete="off"
+                autofocus
+                required
+              />
+              <div id="repository_url_help" class="form-text">
+                Example:
+                <a
+                  href="https://repository.ipb.ac.id/handle/123456789/39884"
+                  target="_blank"
+                  >https://repository.ipb.ac.id/handle/123456789/39884</a
+                >
+              </div>
+            </div>
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-primary btn-sm">
+                <i class="fa fa-paper-plane fa-sm"></i> Generate
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="row justify-content-center my-5">
+        <div class="col-8">
+          {{ if .status }}
+          <div class="alert alert-success text-center" role="alert">
+            Yay! Repository has been generated successfully.
+          </div>
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <tr>
+                <th>Title</th>
+                <td>{{ .repository.Title }}</td>
+              </tr>
+              <tr>
+                <th>Date</th>
+                <td>2019</td>
+              </tr>
+              <tr>
+                <th>Author(s)</th>
+                <td>
+                  {{ range $_, $v := .repository.Authors }}
+                  <div>{{ $v }}</div>
+                  {{ end }}
+                </td>
+              </tr>
+              <tr>
+                <th>File(s)</th>
+                <td colspan="2">
+                  <div class="table-responsive">
+                    <table class="table table-sm">
+                      <tbody>
+                        {{ range $fileName, $fileURL := .repository.Files }}
+                        <tr>
+                          <td class="ps-0">{{ $fileName }}</td>
+                          <td>
+                            <div class="d-grid gap-2">
+                              <form
+                                action="/get-repository-file"
+                                method="POST"
+                                target="_blank"
+                              >
+                                <input
+                                  type="hidden"
+                                  name="repository_file"
+                                  value="{{ $fileURL }}"
+                                />
+                                <button
+                                  type="submit"
+                                  class="btn btn-outline-success btn-sm"
+                                >
+                                  <i class="fa fa-download fa-sm"></i> Download
+                                </button>
+                              </form>
+                            </div>
+                          </td>
+                        </tr>
+                        {{ end }}
+                      </tbody>
+                    </table>
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </div>
+          {{ else }}
+          <div class="alert alert-primary text-center" role="alert">
+            The result will be generated after the form submitted.
+          </div>
+          {{ end }}
+        </div>
+      </div>
     </div>
-  </footer>
 
-  <!-- Optional JavaScript; choose one of the two! -->
+    <footer class="mt-auto py-5 text-center">
+      <div class="container">
+        <span class="text-muted">Made with 💔 by naufalist</span>
+      </div>
+    </footer>
 
-  <!-- Option 1: Bootstrap Bundle with Popper -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj" crossorigin="anonymous"></script>
+    <!-- Optional JavaScript; choose one of the two! -->
 
-  <!-- Option 2: Separate Popper and Bootstrap JS -->
-  <!--
+    <!-- Option 1: Bootstrap Bundle with Popper -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj"
+      crossorigin="anonymous"
+    ></script>
+
+    <!-- Option 2: Separate Popper and Bootstrap JS -->
+    <!--
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js" integrity="sha384-eMNCOe7tC1doHpGoWe/6oMVemdAVTMs2xqW4mwXrXsW0L84Iytr2wi5v2QjrP/xp" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.min.js" integrity="sha384-cn7l7gDp0eyniUwwAZgrzD06kc/tftFf19TOAs2zVinnD/C7E91j9yyk5//jjpt/" crossorigin="anonymous"></script>
     -->
-</body>
-
+  </body>
 </html>
