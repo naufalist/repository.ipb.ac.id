@@ -5,27 +5,39 @@ import (
 	"html/template"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/joho/godotenv"
 )
 
 var (
-	REPO_URL      string
-	PORT          string
-	LDAP_USERNAME string
-	LDAP_PASSWORD string
+	REPO_URL         string
+	PORT             string
+	LDAP_USERNAME    string
+	LDAP_PASSWORD    string
+	SERVER_REACHABLE bool
 )
 
 func init() {
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatalf("Failed to load .env file. Reason: %s", err)
+	}
+
+	timeout := 5 * time.Second
+	_, err = net.DialTimeout("tcp", "repository.ipb.ac.id:443", timeout)
+	if err != nil {
+		SERVER_REACHABLE = false
+		log.Fatalln("Server unreachable: ", err)
+	} else {
+		SERVER_REACHABLE = true
 	}
 
 	REPO_URL = os.Getenv("REPO_URL")
@@ -179,14 +191,18 @@ func handleRoot(w http.ResponseWriter, req *http.Request) {
 
 	switch req.Method {
 	case "GET":
+		result := map[string]interface{}{
+			"server_reachable": SERVER_REACHABLE,
+		}
 		tmpl := template.Must(template.ParseFiles("index.html"))
-		if err := tmpl.Execute(w, nil); err != nil {
+		if err := tmpl.Execute(w, result); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	case "POST":
 		result := map[string]interface{}{
-			"repository": getRepositoryDetails(w, req),
-			"status":     true,
+			"server_reachable": SERVER_REACHABLE,
+			"repository":       getRepositoryDetails(w, req),
+			"status":           true,
 		}
 		tmpl := template.Must(template.ParseFiles("index.html"))
 		if err := tmpl.Execute(w, result); err != nil {
