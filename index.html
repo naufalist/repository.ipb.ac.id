@@ -60,11 +60,17 @@
                 >
               </div>
             </div>
+            {{ if eq .server_reachable true }}
             <div class="d-grid gap-2">
               <button type="submit" class="btn btn-primary btn-sm">
                 <i class="fa fa-paper-plane fa-sm"></i> Generate
               </button>
             </div>
+            {{ else }}
+            <div class="alert alert-danger text-center" role="alert">
+              Server isn't available right now. Please try again later.
+            </div>
+            {{ end }}
           </form>
         </div>
       </div>
@@ -131,11 +137,11 @@
               </tr>
             </table>
           </div>
-          {{ else }}
+          {{ else }} {{ if eq .server_reachable true }}
           <div class="alert alert-primary text-center" role="alert">
             The result will be generated after the form submitted.
           </div>
-          {{ end }}
+          {{ end }} {{ end }}
         </div>
       </div>
     </div>
