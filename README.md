@@ -23,6 +23,14 @@
 </div>
 
 
+## Note (Important!)
+As of this date (07/04/2022), this application is no longer allowed to run.
+However, you could be able to run it locally.
+The source code is still open-source, until someone asked me to remove it 😂
+I'm done with this. Thank you.
+
+<p align="right">(<a href="#top">back to top</a>)</p>
+
 
 <!-- ABOUT THE PROJECT -->
 ## About
